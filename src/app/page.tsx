@@ -67,6 +67,8 @@ const translations = {
     loginButton: "Accedi",
 
     loginLoading: "Accesso...",
+
+    loading: "Caricamento...",
     
     invalidCredentials: "ID o password non corretti.",
 
@@ -226,6 +228,8 @@ const translations = {
     loginButton: "Sign in",
 
     loginLoading: "Signing in...",
+
+    loading: "Loading...",
     
     invalidCredentials: "Incorrect ID or password.",
 
@@ -387,6 +391,8 @@ const translations = {
     loginButton: "Anmelden",
 
     loginLoading: "Anmeldung...",
+
+    loading: "Wird geladen...",
     
     invalidCredentials: "ID oder Passwort ist falsch.",
 
@@ -877,7 +883,7 @@ export default function Home() {
   }
 
   async function handleHealthSubmit() {
-    if (q1Participation === null || isSubmitting) {
+    if (q1Participation === null || isSubmitting || !userProfile?.athlete_id) {
       return;
     }
 
@@ -978,7 +984,8 @@ export default function Home() {
       stress === null ||
       muscleSoreness === null ||
       psychologicalWellbeing === null ||
-      isSubmitting
+      isSubmitting ||
+      !userProfile?.athlete_id
     ) {
       return;
     }
@@ -1040,7 +1047,8 @@ try {
   if (
     wellness === null ||
     rpe === null ||
-    isSubmitting
+    isSubmitting ||
+    !userProfile?.athlete_id
   ) {
     return;
   }
@@ -1116,7 +1124,10 @@ try {
   }
 
   async function handleMsiSubmit() {
-  if (!msiComplete || isSubmitting) {
+  if (
+    !msiComplete || 
+    isSubmitting ||
+    !userProfile?.athlete_id) {
     return;
   }
 
@@ -1380,6 +1391,16 @@ useEffect(() => {
   initializeAuth();
 }, []);
 
+  if (authLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-100">
+        <p className="text-gray-600">
+          {t.loading}
+        </p>
+      </main>
+    );
+  }
+
   if (!userProfile) {
     return (
       <main className="min-h-screen bg-gray-100 px-4 py-8">
@@ -1457,16 +1478,6 @@ useEffect(() => {
     );
   }
 
-
-  if (authLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-100">
-        <p className="text-gray-600">
-          {t.loading}
-        </p>
-      </main>
-    );
-  }
 
   if (language === null) {
     return (
