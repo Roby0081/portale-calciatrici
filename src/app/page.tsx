@@ -16,6 +16,7 @@ type UserProfile = {
   active: boolean;
 };
 
+
 const translations = {
   it: {
     chooseLanguage: "Scegli la lingua",
@@ -834,9 +835,12 @@ export default function Home() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [successMessage, setSuccessMessage] = useState("");
+  const [postSuccess, setPostSuccess] = useState(false);
+  const [recoverySuccess, setRecoverySuccess] = useState(false);
+  const [menstrualSuccess, setMenstrualSuccess] = useState(false);
+  const [healthSuccess, setHealthSuccess] = useState(false);
+  
   const [errorMessage, setErrorMessage] = useState("");
-
   const [authLoading, setAuthLoading] = useState(true);
   const [userProfile, setUserProfile] =
     useState<UserProfile | null>(null);
@@ -882,13 +886,20 @@ export default function Home() {
     );
   }
 
+function clearMessages() {
+  setPostSuccess(false);
+  setRecoverySuccess(false);
+  setMenstrualSuccess(false);
+  setHealthSuccess(false);
+  setErrorMessage("");
+}
+
   async function handleHealthSubmit() {
     if (q1Participation === null || isSubmitting || !userProfile?.athlete_id) {
       return;
     }
 
     setIsSubmitting(true);
-    setSuccessMessage("");
     setErrorMessage("");
 
     const score = calculateOstrcScore();
@@ -950,7 +961,7 @@ export default function Home() {
       throw error;
     }
 
-    setSuccessMessage(t.success);
+    setHealthSuccess(true);
 
     setQ1Participation(null);
     setQ2Modification(null);
@@ -963,7 +974,7 @@ export default function Home() {
     setTimeLossDays("");
     setHealthNotes("");
 
-    setSelectedForm(null);
+    // setSelectedForm(null);
 
     } catch (error) {
   console.error("Supabase OSTRC error:", error);
@@ -991,7 +1002,6 @@ export default function Home() {
     }
 
     setIsSubmitting(true);
-    setSuccessMessage("");
     setErrorMessage("");
 
     const hooperTotal =
@@ -1019,8 +1029,7 @@ try {
         throw error;
     }
 
-    setSuccessMessage(t.success);
-
+    setRecoverySuccess(true);
     setTqr(null);
     setSleepQuality(null);
     setFatigue(null);
@@ -1054,7 +1063,6 @@ try {
   }
 
   setIsSubmitting(true);
-  setSuccessMessage("");
   setErrorMessage("");
 
   try {
@@ -1070,7 +1078,7 @@ try {
       throw error;
     }
 
-    setSuccessMessage(t.success);
+    setPostSuccess(true);
 
     setWellness(null);
     setRpe(null);
@@ -1132,7 +1140,7 @@ try {
   }
 
   setIsSubmitting(true);
-  setSuccessMessage("");
+
   setErrorMessage("");
 try {
   const { error } = await supabase
@@ -1176,10 +1184,9 @@ try {
       throw error;
   }
 
-  setSuccessMessage(t.success);
-
+  setMenstrualSuccess(true);
   resetMsi();
-  setSelectedPreSection(null);
+  // setSelectedPreSection(null);
 
   setIsSubmitting(false);
 }  catch (error) {
@@ -1199,8 +1206,7 @@ try {
   function goToMainMenu() {
     setSelectedForm(null);
     setSelectedPreSection(null);
-    setSuccessMessage("");
-    setErrorMessage("");
+    clearMessages();
   }
 
 
@@ -1331,7 +1337,6 @@ async function handleLogin() {
     setLoginLoading(false);
   }
 }
-
 
 
 useEffect(() => {
@@ -1593,7 +1598,7 @@ useEffect(() => {
           <div className="space-y-4">
             <button
               type="button"
-              onClick={() => setSelectedForm("post")}
+              onClick={() => {clearMessages(); setSelectedForm("post");}}
               className="w-full rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:bg-gray-50"
             >
               <div className="text-lg font-bold text-gray-900">
@@ -1607,7 +1612,7 @@ useEffect(() => {
 
             <button
               type="button"
-              onClick={() => setSelectedForm("pre")}
+              onClick={() => {clearMessages(); setSelectedForm("pre");}}
               className="w-full rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:bg-gray-50"
             >
               <div className="text-lg font-bold text-gray-900">
@@ -1621,7 +1626,7 @@ useEffect(() => {
 
             <button
               type="button"
-              onClick={() => setSelectedForm("injury")}
+              onClick={() => {clearMessages(); setSelectedForm("injury");}}
               className="w-full rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:bg-gray-50"
             >
               <div className="text-lg font-bold text-gray-900">
@@ -1665,9 +1670,7 @@ useEffect(() => {
           <div className="space-y-4">
             <button
               type="button"
-              onClick={() =>
-                setSelectedPreSection("recovery")
-              }
+              onClick={() => {clearMessages(); setSelectedPreSection("recovery");}}
               className="w-full rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm hover:bg-gray-50"
             >
               <div className="text-lg font-bold text-gray-900">
@@ -1681,9 +1684,7 @@ useEffect(() => {
 
             <button
               type="button"
-              onClick={() =>
-                setSelectedPreSection("menstrual")
-              }
+              onClick={() => {clearMessages(); setSelectedPreSection("menstrual");}}
               className="w-full rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm hover:bg-gray-50"
             >
               <div className="text-lg font-bold text-gray-900">
@@ -1719,7 +1720,7 @@ if (
 
         <button
           type="button"
-          onClick={() => setSelectedPreSection(null)}
+          onClick={() => {clearMessages(); setSelectedPreSection(null);}}
           className="mb-6 text-sm font-medium text-gray-600 hover:text-gray-900"
         >
           {t.backPre}
@@ -1851,9 +1852,9 @@ if (
           {isSubmitting ? t.sending : t.submit}
         </button>
 
-        {successMessage && (
+        {recoverySuccess && (
           <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-center text-green-800">
-            {successMessage}
+            {t.success}
           </div>
         )}
 
@@ -1878,7 +1879,7 @@ if (
         <div className="mx-auto max-w-md rounded-2xl bg-white p-6 shadow-md">
           <button
             type="button"
-            onClick={() => setSelectedPreSection(null)}
+            onClick={() => {clearMessages(); setSelectedPreSection(null);}}
             className="mb-6 text-sm font-medium text-gray-600 hover:text-gray-900"
           >
             {t.backPre}
@@ -1940,12 +1941,8 @@ if (
                           <div className="mt-4 grid grid-cols-3 gap-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                updateMsiResponse(
-                                  symptom.id,
-                                  0
-                                )
-                              }
+                              onClick={() => {clearMessages(); updateMsiResponse(symptom.id, 0);}}
+
                               className={`rounded-lg border px-2 py-3 text-sm font-semibold transition ${
                                 selectedValue === 0
                                   ? "border-gray-900 bg-gray-900 text-white"
@@ -2013,9 +2010,9 @@ if (
                 {isSubmitting ? t.sending : t.submit}
             </button>
 
-            {successMessage && (
+            {menstrualSuccess && (
               <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-center text-green-800">
-                {successMessage}
+                {t.success}
               </div>
             )}
 
@@ -2379,9 +2376,9 @@ if (selectedForm === "injury") {
           {isSubmitting ? t.sending : t.healthSubmit}
         </button>
 
-        {successMessage && (
+        {healthSuccess && (
           <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-center text-green-800">
-            {successMessage}
+            {t.success}
           </div>
         )}
 
@@ -2453,7 +2450,7 @@ if (selectedForm === "injury") {
 
           <div className="mx-auto max-w-sm">
             <img
-              src="/images/borg-cr10.png"
+              src="/images/borg-cr10_it.png"
               alt="Borg CR10 Scale"
               className="block h-auto w-full select-none"
               draggable={false}
@@ -2509,9 +2506,9 @@ if (selectedForm === "injury") {
           {isSubmitting ? t.sending : t.submit}
         </button>
 
-        {successMessage && (
+        {postSuccess && (
           <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-center text-green-800">
-            {successMessage}
+            {t.success}
           </div>
         )}
 
