@@ -852,6 +852,18 @@ export default function Home() {
 
   const t = translations[language ?? "it"];
 
+  const currentLanguage = language ?? "it";
+
+  const borgImage =
+    currentLanguage === "it"
+      ? "public/images/borg-cr10_it.png"
+      : "public/images/borg-cr10_eng.png";
+
+  const tqrImage =
+    currentLanguage === "it"
+      ? "public/images/TQR_it.png"
+      : "public/images/TQR_eng.png";
+
     function calculateOstrcScore() {
     if (q1Participation === null) return null;
 
@@ -1750,7 +1762,7 @@ if (
 
           <div className="mx-auto max-w-sm">
             <img
-              src="/images/TQR.png"
+              src={tqrImage}
               alt="Total Quality Recovery Scale"
               className="block h-auto w-full select-none"
               draggable={false}
@@ -2450,7 +2462,7 @@ if (selectedForm === "injury") {
 
           <div className="mx-auto max-w-sm">
             <img
-              src="/images/borg-cr10_it.png"
+              src={borgImage}
               alt="Borg CR10 Scale"
               className="block h-auto w-full select-none"
               draggable={false}

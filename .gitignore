@@ -20,6 +20,9 @@
 # production
 /build
 
+# dati login
+private/new-athletes.csv
+
 # misc
 .DS_Store
 *.pem
