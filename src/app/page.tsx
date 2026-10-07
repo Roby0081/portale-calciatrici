@@ -856,7 +856,7 @@ export default function Home() {
 
   const borgImage =
     currentLanguage === "it"
-      ? "public/images/borg-cr10_it.png"
+      ? "images/borg-cr10_it.png"
       : "public/images/borg-cr10_eng.png";
 
   const tqrImage =
