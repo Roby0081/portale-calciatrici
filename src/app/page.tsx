@@ -856,13 +856,13 @@ export default function Home() {
 
   const borgImage =
     currentLanguage === "it"
-      ? "images/borg-cr10_it.png"
-      : "public/images/borg-cr10_eng.png";
+      ? "/images/borg-cr10_it.png"
+      : "/images/borg-cr10_eng.png";
 
   const tqrImage =
     currentLanguage === "it"
-      ? "public/images/TQR_it.png"
-      : "public/images/TQR_eng.png";
+      ? "/images/TQR_it.png"
+      : "/images/TQR_eng.png";
 
     function calculateOstrcScore() {
     if (q1Participation === null) return null;
