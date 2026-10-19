@@ -99,20 +99,38 @@ const translations = {
     },
     
     tqrTitle: "Total Quality Recovery",
-    tqrInstruction: "Seleziona il valore che descrive meglio il tuo livello di recupero",
+    tqrInstruction:
+      "Seleziona il valore che descrive meglio il tuo livello di recupero",
     tqrNoValue: "Nessun valore selezionato",
 
     hooperTitle: "Hooper Index",
-    hooperInstruction: "Valuta il tuo stato attuale per ciascuna dimensione",
+    hooperInstruction:
+      "Valuta il tuo stato attuale per ciascuna dimensione",
 
-    sleepQuality: "Qualità del sonno",
-    fatigue: "Fatica",
-    stress: "Stress",
-    muscleSoreness: "Dolore muscolare",
-    psychologicalWellbeing: "Benessere psicologico",
+    sleepQuality: "Qualità del sonno della notte scorsa",
+    fatigue: "Livello di fatica percepita",
+    stress: "Livello di stress percepito",
+    muscleSoreness: "Dolore / indolenzimento muscolare",
 
-    low: "Basso",
-    high: "Alto",
+    sleepGood: "Molto buona",
+    sleepPoor: "Molto scarsa",
+
+    fatigueLow: "Molto bassa",
+    fatigueHigh: "Molto alta",
+
+    stressLow: "Molto basso",
+    stressHigh: "Molto alto",
+
+    sorenessLow: "Molto basso",
+    sorenessHigh: "Molto alto",
+
+    additionalWellbeingTitle: "Benessere psicologico",
+    additionalWellbeingDescription:
+      "Item aggiuntivo, non incluso nel calcolo dell'Hooper Index",
+    psychologicalWellbeing: "Benessere psicologico generale",
+
+    wellbeingGood: "Molto buono",
+    wellbeingPoor: "Molto scarso",
 
     healthTitle: "Problemi di salute",
     
@@ -261,20 +279,38 @@ const translations = {
     },
       
     tqrTitle: "Total Quality Recovery",
-      tqrInstruction: "Select the value that best describes your current recovery level",
-      tqrNoValue: "No value selected",
+    tqrInstruction:
+      "Select the value that best describes your current recovery level",
+    tqrNoValue: "No value selected",
 
-      hooperTitle: "Hooper Index",
-      hooperInstruction: "Rate your current status for each dimension",
+    hooperTitle: "Hooper Index",
+    hooperInstruction:
+      "Rate your current status for each dimension",
 
-      sleepQuality: "Sleep quality",
-      fatigue: "Fatigue",
-      stress: "Stress",
-      muscleSoreness: "Muscle soreness",
-      psychologicalWellbeing: "Psychological wellbeing",
+    sleepQuality: "Sleep quality last night",
+    fatigue: "Perceived fatigue level",
+    stress: "Perceived stress level",
+    muscleSoreness: "Muscle soreness",
 
-      low: "Low",
-      high: "High",
+    sleepGood: "Very good",
+    sleepPoor: "Very poor",
+
+    fatigueLow: "Very low",
+    fatigueHigh: "Very high",
+
+    stressLow: "Very low",
+    stressHigh: "Very high",
+
+    sorenessLow: "Very low",
+    sorenessHigh: "Very high",
+
+    additionalWellbeingTitle: "Psychological wellbeing",
+    additionalWellbeingDescription:
+      "Additional item, not included in the Hooper Index score",
+    psychologicalWellbeing: "Overall psychological wellbeing",
+
+    wellbeingGood: "Very good",
+    wellbeingPoor: "Very poor",
 
       healthTitle: "Health problems",
 
@@ -424,20 +460,38 @@ const translations = {
       psychological: "Psychologische / verhaltensbezogene Symptome",
     },
     tqrTitle: "Total Quality Recovery",
-    tqrInstruction: "Wähle den Wert, der deinen aktuellen Erholungszustand am besten beschreibt",
+    tqrInstruction:
+      "Wähle den Wert, der deinen aktuellen Erholungszustand am besten beschreibt",
     tqrNoValue: "Kein Wert ausgewählt",
 
     hooperTitle: "Hooper Index",
-    hooperInstruction: "Bewerte deinen aktuellen Zustand für jede Dimension",
+    hooperInstruction:
+      "Bewerte deinen aktuellen Zustand für jede Dimension",
 
-    sleepQuality: "Schlafqualität",
-    fatigue: "Müdigkeit",
-    stress: "Stress",
-    muscleSoreness: "Muskelschmerzen",
-    psychologicalWellbeing: "Psychisches Wohlbefinden",
+    sleepQuality: "Schlafqualität der letzten Nacht",
+    fatigue: "Wahrgenommenes Ermüdungsniveau",
+    stress: "Wahrgenommenes Stressniveau",
+    muscleSoreness: "Muskelschmerzen / Muskelkater",
 
-    low: "Niedrig",
-    high: "Hoch",
+    sleepGood: "Sehr gut",
+    sleepPoor: "Sehr schlecht",
+
+    fatigueLow: "Sehr niedrig",
+    fatigueHigh: "Sehr hoch",
+
+    stressLow: "Sehr niedrig",
+    stressHigh: "Sehr hoch",
+
+    sorenessLow: "Sehr niedrig",
+    sorenessHigh: "Sehr hoch",
+
+    additionalWellbeingTitle: "Psychisches Wohlbefinden",
+    additionalWellbeingDescription:
+      "Zusätzliches Item, nicht im Hooper-Index-Wert enthalten",
+    psychologicalWellbeing: "Allgemeines psychisches Wohlbefinden",
+
+    wellbeingGood: "Sehr gut",
+    wellbeingPoor: "Sehr schlecht",
 
      // OSTRC questionnaire german
 
@@ -1020,8 +1074,8 @@ function clearMessages() {
       sleepQuality +
       fatigue +
       stress +
-      muscleSoreness +
-      psychologicalWellbeing;
+      muscleSoreness ;
+
 try {
     const { error } = await supabase
       .from("recovery_monitoring")
@@ -1713,7 +1767,7 @@ useEffect(() => {
     );
   }
 
-  // RECUPERO
+// RECUPERO
 if (
   selectedForm === "pre" &&
   selectedPreSection === "recovery"
@@ -1732,7 +1786,10 @@ if (
 
         <button
           type="button"
-          onClick={() => {clearMessages(); setSelectedPreSection(null);}}
+          onClick={() => {
+            clearMessages();
+            setSelectedPreSection(null);
+          }}
           className="mb-6 text-sm font-medium text-gray-600 hover:text-gray-900"
         >
           {t.backPre}
@@ -1746,11 +1803,7 @@ if (
           {t.recoveryDescription}
         </p>
 
-    
-
-        
         {/* TQR */}
-
         <div className="mb-10">
           <h2 className="mb-2 text-lg font-bold text-gray-900">
             {t.tqrTitle}
@@ -1802,7 +1855,6 @@ if (
         </div>
 
         {/* HOOPER INDEX */}
-
         <div className="border-t border-gray-200 pt-8">
           <h2 className="mb-2 text-lg font-bold text-gray-900">
             {t.hooperTitle}
@@ -1816,45 +1868,55 @@ if (
             label={t.sleepQuality}
             value={sleepQuality}
             onChange={setSleepQuality}
-            lowLabel={t.low}
-            highLabel={t.high}
+            lowLabel={t.sleepGood}
+            highLabel={t.sleepPoor}
           />
 
           <HooperItem
             label={t.fatigue}
             value={fatigue}
             onChange={setFatigue}
-            lowLabel={t.low}
-            highLabel={t.high}
+            lowLabel={t.fatigueLow}
+            highLabel={t.fatigueHigh}
           />
 
           <HooperItem
             label={t.stress}
             value={stress}
             onChange={setStress}
-            lowLabel={t.low}
-            highLabel={t.high}
+            lowLabel={t.stressLow}
+            highLabel={t.stressHigh}
           />
 
           <HooperItem
             label={t.muscleSoreness}
             value={muscleSoreness}
             onChange={setMuscleSoreness}
-            lowLabel={t.low}
-            highLabel={t.high}
+            lowLabel={t.sorenessLow}
+            highLabel={t.sorenessHigh}
           />
+        </div>
+
+        {/* BENESSERE PSICOLOGICO - ITEM AGGIUNTIVO */}
+        <div className="mt-8 border-t border-gray-200 pt-8">
+          <h2 className="mb-2 text-lg font-bold text-gray-900">
+            {t.additionalWellbeingTitle}
+          </h2>
+
+          <p className="mb-5 text-sm text-gray-600">
+            {t.additionalWellbeingDescription}
+          </p>
 
           <HooperItem
             label={t.psychologicalWellbeing}
             value={psychologicalWellbeing}
             onChange={setPsychologicalWellbeing}
-            lowLabel={t.low}
-            highLabel={t.high}
+            lowLabel={t.wellbeingGood}
+            highLabel={t.wellbeingPoor}
           />
         </div>
 
         {/* INVIO */}
-
         <button
           type="button"
           onClick={handleRecoverySubmit}
