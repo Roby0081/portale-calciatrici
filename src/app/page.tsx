@@ -15,7 +15,14 @@ type UserProfile = {
   login_id: string | null;
   active: boolean;
 };
-
+type AthleteTrainingSession = {
+  id: string;
+  session_date: string;
+  start_time: string | null;
+  duration_min: number;
+  session_type: string;
+  status: string;
+};
 
 const translations = {
   it: {
@@ -32,7 +39,7 @@ const translations = {
     preTrainingDescription:
       "Recupero, benessere e ciclo mestruale",
 
-    injuries: "Problemi di salute",
+    injuries: "Monitoraggio salute",
     injuriesDescription:
       "Segnala infortuni, malattie o altri problemi di salute",
 
@@ -195,6 +202,15 @@ const translations = {
     notesPlaceholder: "Aggiungi eventuali informazioni utili",
 
     healthSubmit: "Invia questionario settimanale",
+
+    sessionReference: "Seduta di riferimento",
+    sessionReferenceHelp:
+      "Seleziona la seduta appena svolta, se disponibile.",
+    sessionNotListed:
+      "La seduta non è presente o non è ancora stata registrata",
+    sessionsLoading: "Caricamento sedute...",
+    noRecentSessions:
+      "Nessuna seduta recente disponibile. Puoi comunque inviare il questionario.",
   },
 
   en: {
@@ -211,7 +227,7 @@ const translations = {
     preTrainingDescription:
       "Recovery, wellbeing and menstrual cycle",
 
-    injuries: "Health problems",
+    injuries: "Health moniotoring",
     injuriesDescription:
       "Report injuries, illnesses or other health problems",
 
@@ -377,6 +393,14 @@ const translations = {
 
       healthSubmit: "Submit weekly questionnaire",
 
+      sessionReference: "Training session",
+      sessionReferenceHelp:
+        "Select the session you have just completed, if available.",
+      sessionNotListed:
+        "The session is not listed or has not been registered yet",
+      sessionsLoading: "Loading sessions...",
+      noRecentSessions:
+        "No recent session is available. You can still submit the questionnaire.",      
   },
 
   de: {
@@ -393,7 +417,7 @@ const translations = {
     preTrainingDescription:
       "Erholung, Wohlbefinden und Menstruationszyklus",
 
-    injuries: "Gesundheitsprobleme",
+    injuries: "Gesundheitsmonitoring",
     injuriesDescription:
       "Melde Verletzungen, Erkrankungen oder andere Gesundheitsprobleme",
 
@@ -557,6 +581,15 @@ const translations = {
     notesPlaceholder: "Weitere nützliche Informationen",
 
     healthSubmit: "Wöchentlichen Fragebogen absenden",
+
+    sessionReference: "Trainingseinheit",
+    sessionReferenceHelp:
+      "Wähle die gerade absolvierte Einheit aus, sofern sie verfügbar ist.",
+    sessionNotListed:
+      "Die Einheit ist nicht aufgeführt oder wurde noch nicht registriert",
+    sessionsLoading: "Trainingseinheiten werden geladen...",
+    noRecentSessions:
+      "Keine aktuelle Trainingseinheit verfügbar. Du kannst den Fragebogen trotzdem absenden.",
   },
 };
 
@@ -865,6 +898,21 @@ export default function Home() {
     setPsychologicalWellbeing,
   ] = useState<number | null>(null);
 
+  const [
+  availableTrainingSessions,
+  setAvailableTrainingSessions,
+] = useState<AthleteTrainingSession[]>([]);
+
+  const [
+    selectedTrainingSessionId,
+    setSelectedTrainingSessionId,
+  ] = useState<string | null>(null);
+
+  const [
+    trainingSessionsLoading,
+    setTrainingSessionsLoading,
+  ] = useState(false);
+
   const [q1Participation, setQ1Participation] =
   useState<number | null>(null);
 
@@ -1141,6 +1189,8 @@ try {
         athlete_id: userProfile.athlete_id,
         wellness,
         rpe,
+        training_session_id:
+          selectedTrainingSessionId,
       });
 
     if (error) {
@@ -1151,6 +1201,7 @@ try {
 
     setWellness(null);
     setRpe(null);
+    setSelectedTrainingSessionId(null);
   } catch (error) {
     console.error(
       "Supabase error:",
@@ -1407,6 +1458,202 @@ async function handleLogin() {
   }
 }
 
+function formatLocalDate(
+  date: Date
+) {
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      date.getDate()
+    ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+
+function getSessionTypeLabel(
+  type: string
+) {
+  const labels = {
+    it: {
+      training: "Allenamento",
+      gym: "Palestra",
+      recovery: "Recupero",
+      friendly: "Amichevole",
+      other: "Altro",
+    },
+
+    en: {
+      training: "Training",
+      gym: "Gym",
+      recovery: "Recovery",
+      friendly: "Friendly match",
+      other: "Other",
+    },
+
+    de: {
+      training: "Training",
+      gym: "Kraftraum",
+      recovery: "Regeneration",
+      friendly: "Testspiel",
+      other: "Andere",
+    },
+  };
+
+  return (
+    labels[language ?? "it"][
+      type as keyof typeof labels.it
+    ] ?? type
+  );
+}
+
+
+function formatSessionDate(
+  dateString: string
+) {
+  const locale =
+    language === "en"
+      ? "en-GB"
+      : language === "de"
+      ? "de-DE"
+      : "it-IT";
+
+  return new Intl.DateTimeFormat(
+    locale,
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }
+  ).format(
+    new Date(
+      `${dateString}T00:00:00`
+    )
+  );
+}
+
+
+  async function loadAvailableTrainingSessions() {
+
+    if (
+      !userProfile ||
+      userProfile.role !== "athlete"
+    ) {
+      return;
+    }
+
+    setTrainingSessionsLoading(true);
+
+    try {
+
+      const today =
+        new Date();
+
+      const yesterday =
+        new Date();
+
+      yesterday.setDate(
+        yesterday.getDate() - 1
+      );
+
+      const {
+        data,
+        error,
+      } = await supabase.rpc(
+        "get_athlete_training_sessions",
+        {
+          p_from_date:
+            formatLocalDate(
+              yesterday
+            ),
+
+          p_to_date:
+            formatLocalDate(
+              today
+            ),
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      const sessions =
+        (data ?? []) as AthleteTrainingSession[];
+
+      setAvailableTrainingSessions(
+        sessions
+      );
+
+      /*
+        Una sola seduta:
+        possiamo preselezionarla.
+
+        Più sedute:
+        lasciamo scegliere l'atleta.
+      */
+      if (sessions.length === 1) {
+
+        setSelectedTrainingSessionId(
+          sessions[0].id
+        );
+
+      } else {
+
+        setSelectedTrainingSessionId(
+          null
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Errore caricamento sedute:",
+        error
+      );
+
+      /*
+        Un errore nel caricamento
+        NON deve impedire la
+        compilazione del questionario.
+      */
+      setAvailableTrainingSessions(
+        []
+      );
+
+      setSelectedTrainingSessionId(
+        null
+      );
+
+    } finally {
+
+      setTrainingSessionsLoading(
+        false
+      );
+    }
+  }
+
+
+ useEffect(() => {
+
+  if (
+    selectedForm === "post" &&
+    userProfile?.role === "athlete"
+  ) {
+    loadAvailableTrainingSessions();
+  }
+
+  }, [
+    selectedForm,
+    userProfile?.id,
+    ]); 
 
 useEffect(() => {
     async function initializeAuth() {
@@ -2489,6 +2736,94 @@ if (selectedForm === "injury") {
         <p className="mb-8 text-center text-gray-600">
           {t.postSubtitle}
         </p>
+
+        <div className="mb-8 rounded-xl border border-gray-200 bg-gray-50 p-4">
+
+          <p className="font-semibold text-gray-900">
+            {t.sessionReference}
+          </p>
+
+          <p className="mt-1 text-sm text-gray-600">
+            {t.sessionReferenceHelp}
+          </p>
+
+
+          {trainingSessionsLoading ? (
+
+            <p className="mt-4 text-sm text-gray-500">
+              {t.sessionsLoading}
+            </p>
+
+          ) : availableTrainingSessions.length === 0 ? (
+
+            <p className="mt-4 text-sm text-gray-500">
+              {t.noRecentSessions}
+            </p>
+
+          ) : (
+
+            <select
+              value={
+                selectedTrainingSessionId ??
+                ""
+              }
+              onChange={(e) =>
+                setSelectedTrainingSessionId(
+                  e.target.value ||
+                    null
+                )
+              }
+              className="mt-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900"
+            >
+
+              <option value="">
+                {t.sessionNotListed}
+              </option>
+
+
+              {availableTrainingSessions.map(
+                (session) => (
+
+                  <option
+                    key={
+                      session.id
+                    }
+                    value={
+                      session.id
+                    }
+                  >
+
+                    {formatSessionDate(
+                      session.session_date
+                    )}
+
+                    {session.start_time
+                      ? ` · ${session.start_time.slice(
+                          0,
+                          5
+                        )}`
+                      : ""}
+
+                    {" · "}
+
+                    {getSessionTypeLabel(
+                      session.session_type
+                    )}
+
+                    {" · "}
+
+                    {session.duration_min} min
+
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+          )}
+
+        </div>
 
         <div className="mb-8">
           <p className="mb-3 font-semibold text-gray-700">
