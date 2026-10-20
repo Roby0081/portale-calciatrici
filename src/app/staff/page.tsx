@@ -58,6 +58,13 @@ type UnlinkedPostTraining = {
   created_at: string;
 };
 
+type TrainingSessionSummary = {
+  session_id: string;
+  response_count: number;
+  mean_rpe: number | null;
+  mean_srpe: number | null;
+};
+
 const objectiveOptions: {
   code: ObjectiveCode;
   label: string;
@@ -210,6 +217,10 @@ const [
     setLoginLoading,
   ] = useState(false);
 
+  const [
+  sessionSummaries,
+  setSessionSummaries,
+  ] = useState<Record<string, TrainingSessionSummary>>({});   
 
   // ==========================================================
   // SESSION FORM
@@ -577,6 +588,55 @@ const [
     setSessionsLoading(false);
   }
 
+  async function loadSessionSummaries() {
+
+    if (!staffProfile?.team_id) {
+      return;
+    }
+
+    const {
+      data,
+      error,
+    } = await supabase.rpc(
+      "get_training_session_summaries"
+    );
+
+    if (error) {
+
+      console.error(
+        "Errore caricamento riepilogo sedute:",
+        error
+      );
+
+      setSessionSummaries({});
+      return;
+    }
+
+    const summaries: Record<
+      string,
+      TrainingSessionSummary
+    > = {};
+
+    for (const item of data ?? []) {
+
+      summaries[item.session_id] = {
+        session_id: item.session_id,
+        response_count: Number(
+          item.response_count ?? 0
+        ),
+        mean_rpe:
+          item.mean_rpe === null
+            ? null
+            : Number(item.mean_rpe),
+        mean_srpe:
+          item.mean_srpe === null
+            ? null
+            : Number(item.mean_srpe),
+      };
+    }
+
+    setSessionSummaries(summaries);
+  } 
 
   async function loadUnlinkedPosts() {
 
@@ -897,7 +957,9 @@ async function handleAssociatePost(
       setAssociationSuccess(
         "Post-allenamento associato correttamente."
       );
-
+      
+await loadSessionSummaries();
+      
     } catch (error) {
 
       console.error(
@@ -1188,6 +1250,7 @@ async function handleCreateSession() {
     ) {
       loadSessions();
       loadUnlinkedPosts();
+      loadSessionSummaries();
     }
 
   }, [staffProfile?.team_id]);
@@ -2039,6 +2102,87 @@ async function handleCreateSession() {
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                           {session.status}
                         </span>
+
+    {/* RIEPILOGO POST-ALLENAMENTO */}
+
+                            {(() => {
+
+                            const summary =
+                              sessionSummaries[session.id];
+
+                            const responseCount =
+                              summary?.response_count ?? 0;
+
+                            return (
+
+                              <div className="mt-4 rounded-xl bg-gray-50 p-4">
+
+                                <div className="mb-3 text-sm font-semibold text-gray-900">
+                                  Post-allenamento
+                                </div>
+
+
+                                {responseCount === 0 ? (
+
+                                  <div className="text-sm text-gray-500">
+                                    Nessuna risposta
+                                  </div>
+
+                                ) : (
+
+                                  <div className="grid grid-cols-3 gap-3">
+
+                                    <div>
+
+                                      <div className="text-xs text-gray-500">
+                                        Risposte
+                                      </div>
+
+                                      <div className="mt-1 font-bold text-gray-900">
+                                        {responseCount}
+                                      </div>
+
+                                    </div>
+
+
+                                    <div>
+
+                                      <div className="text-xs text-gray-500">
+                                        RPE medio
+                                      </div>
+
+                                      <div className="mt-1 font-bold text-gray-900">
+                                        {summary?.mean_rpe ?? "—"}
+                                      </div>
+
+                                    </div>
+
+
+                                    <div>
+
+                                      <div className="text-xs text-gray-500">
+                                        sRPE medio
+                                      </div>
+
+                                      <div className="mt-1 font-bold text-gray-900">
+                                        {summary?.mean_srpe ?? "—"}
+                                        {summary?.mean_srpe !== null &&
+                                          summary?.mean_srpe !== undefined
+                                          ? " AU"
+                                          : ""}
+                                      </div>
+
+                                    </div>
+
+                                  </div>
+
+                                )}
+
+                              </div>
+
+                            );
+
+                          })()}
 
                         <button
                           type="button"
