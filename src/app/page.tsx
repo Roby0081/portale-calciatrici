@@ -23,20 +23,21 @@ const translations = {
     appTitle: "Player Monitoring",
 
     whatCompile: "Cosa vuoi compilare?",
+
     postTraining: "Post-allenamento",
     postTrainingDescription:
-      "Inserisci la percezione dello sforzo della sessione",
+      "RPE e percezione post-sessione",
 
-    preTraining: "Pre-allenamento",
+    preTraining: "Monitoraggio giornaliero",
     preTrainingDescription:
-      "Recupero, benessere e monitoraggio del ciclo",
+      "Recupero, benessere e ciclo mestruale",
 
-    injuries: "Infortuni",
+    injuries: "Problemi di salute",
     injuriesDescription:
-      "Segnala un problema fisico o un infortunio",
+      "Segnala infortuni, malattie o altri problemi di salute",
 
-    backMenu: "← Torna al menu",
-    backPre: "← Pre-allenamento",
+    backPre: "← Monitoraggio giornaliero",
+
     changeLanguage: "Cambia lingua",
 
     chooseQuestionnaire: "Seleziona il questionario da compilare",
@@ -201,20 +202,21 @@ const translations = {
     appTitle: "Player Monitoring",
 
     whatCompile: "What would you like to complete?",
+
     postTraining: "Post-training",
     postTrainingDescription:
-      "Enter your perceived exertion for the session",
+      "Post-session RPE and perceived status",
 
-    preTraining: "Pre-training",
+    preTraining: "Daily monitoring",
     preTrainingDescription:
-      "Recovery, wellness and menstrual cycle monitoring",
+      "Recovery, wellbeing and menstrual cycle",
 
-    injuries: "Injuries",
+    injuries: "Health problems",
     injuriesDescription:
-      "Report a physical problem or injury",
+      "Report injuries, illnesses or other health problems",
 
-    backMenu: "← Back to menu",
-    backPre: "← Pre-training",
+    backPre: "← Daily monitoring",
+
     changeLanguage: "Change language",
 
     chooseQuestionnaire: "Select the questionnaire to complete",
@@ -382,20 +384,21 @@ const translations = {
     appTitle: "Player Monitoring",
 
     whatCompile: "Was möchtest du ausfüllen?",
+
     postTraining: "Nach dem Training",
     postTrainingDescription:
-      "Gib deine wahrgenommene Belastung der Trainingseinheit an",
+      "RPE und wahrgenommener Zustand nach der Einheit",
 
-    preTraining: "Vor dem Training",
+    preTraining: "Tägliches Monitoring",
     preTrainingDescription:
       "Erholung, Wohlbefinden und Menstruationszyklus",
 
-    injuries: "Verletzungen",
+    injuries: "Gesundheitsprobleme",
     injuriesDescription:
-      "Melde körperliche Beschwerden oder Verletzungen",
+      "Melde Verletzungen, Erkrankungen oder andere Gesundheitsprobleme",
 
-    backMenu: "← Zurück zum Menü",
-    backPre: "← Vor dem Training",
+    backPre: "← Tägliches Monitoring",
+
     changeLanguage: "Sprache ändern",
 
     chooseQuestionnaire: "Wähle den Fragebogen aus",
