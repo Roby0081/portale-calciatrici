@@ -1725,7 +1725,7 @@ useEffect(() => {
             onClick={goToMainMenu}
             className="mb-6 text-sm font-medium text-gray-600 hover:text-gray-900"
           >
-            {t.backMenu}
+            {t.backPre}
           </button>
 
           <h1 className="mb-2 text-center text-2xl font-bold text-gray-900">
@@ -2152,7 +2152,7 @@ if (selectedForm === "injury") {
           onClick={goToMainMenu}
           className="mb-6 text-sm font-medium text-gray-600 hover:text-gray-900"
         >
-          {t.backMenu}
+          {t.backPre}
         </button>
 
         <h1 className="mb-2 text-center text-2xl font-bold text-gray-900">
@@ -2479,7 +2479,7 @@ if (selectedForm === "injury") {
           onClick={goToMainMenu}
           className="mb-6 text-sm font-medium text-gray-600 hover:text-gray-900"
         >
-          {t.backMenu}
+          {t.backPre}
         </button>
 
         <h1 className="mb-2 text-center text-2xl font-bold text-gray-900">
