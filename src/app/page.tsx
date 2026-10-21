@@ -2,6 +2,8 @@
 
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import PushNotificationControl
+  from "@/components/PushNotificationControl";
 
 type Language = "it" | "en" | "de";
 type FormType = "post" | "pre" | "injury" | null;
@@ -1910,6 +1912,11 @@ useEffect(() => {
               Logout
             </button>
           </div>
+
+                    <div className="mb-5">
+                      <PushNotificationControl />
+                    </div>
+
 
           <div className="space-y-4">
             <button
