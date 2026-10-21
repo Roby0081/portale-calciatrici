@@ -257,78 +257,73 @@ export default function PushNotificationControl() {
   }
 
   
-  if (!supported) {
-
-    return (
-      <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
-        Le notifiche push non sono disponibili
-        su questo dispositivo o browser.
-      </div>
-    );
-  }
-
-
+ if (!supported) {
   return (
+    <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
+      Le notifiche push non sono disponibili
+      su questo dispositivo o browser.
+    </div>
+  );
+}
 
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
 
-      <div className="flex items-start gap-3">
+return (
 
-        <div className="text-2xl">
-          🔔
+  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+
+    <div className="flex items-start gap-3">
+
+      <div className="text-2xl">
+        🔔
+      </div>
+
+      <div className="flex-1">
+
+        <div className="font-semibold text-gray-900">
+          Notifiche
         </div>
 
-        <div className="flex-1">
-
-          <div className="font-semibold text-gray-900">
-            Notifiche
-          </div>
-
-          <p className="mt-1 text-sm text-gray-600">
-            Ricevi un promemoria quando hai
-            un questionario da completare.
-          </p>
+        <p className="mt-1 text-sm text-gray-600">
+          Ricevi un promemoria quando hai
+          un questionario da completare.
+        </p>
 
 
         {enabled ? (
 
-        <div className="mt-3">
-
-            <div className="text-sm font-medium text-green-700">
+          <div className="mt-3 text-sm font-medium text-green-700">
             Notifiche attive
-            </div>
+          </div>
 
         ) : (
 
-            <button
-              type="button"
-              onClick={
-                enableNotifications
-              }
-              disabled={loading}
-              className="mt-3 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-gray-300"
-            >
-              {loading
-                ? "Attivazione..."
-                : "Attiva notifiche"}
-            </button>
+          <button
+            type="button"
+            onClick={enableNotifications}
+            disabled={loading}
+            className="mt-3 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-gray-300"
+          >
+            {loading
+              ? "Attivazione..."
+              : "Attiva notifiche"}
+          </button>
 
-          )}
+        )}
 
 
-          {message && (
+        {message && (
 
-            <div className="mt-3 text-sm text-gray-600">
-              {message}
-            </div>
+          <div className="mt-3 text-sm text-gray-600">
+            {message}
+          </div>
 
-          )}
-
-        </div>
+        )}
 
       </div>
 
     </div>
 
-  );
+  </div>
+
+);
 }
