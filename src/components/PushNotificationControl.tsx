@@ -256,91 +256,7 @@ export default function PushNotificationControl() {
     }
   }
 
-  async function sendTestNotification() {
-
-  if (loading) {
-    return;
-  }
-
-  setLoading(true);
-  setMessage("");
-
-  try {
-
-    const {
-      data: sessionData,
-      error: sessionError,
-    } =
-      await supabase.auth
-        .getSession();
-
-
-    const accessToken =
-      sessionData.session
-        ?.access_token;
-
-
-    if (
-      sessionError ||
-      !accessToken
-    ) {
-
-      throw new Error(
-        "Sessione utente non disponibile."
-      );
-    }
-
-
-    const response =
-      await fetch(
-        "/api/test-push",
-        {
-          method: "POST",
-
-          headers: {
-            Authorization:
-              `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-
-    const result =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        result.error ??
-          "Errore invio notifica."
-      );
-    }
-
-
-    setMessage(
-      "Notifica di prova inviata."
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Errore test notifica:",
-      error
-    );
-
-    setMessage(
-      error instanceof Error
-        ? error.message
-        : "Non è stato possibile inviare la notifica."
-    );
-
-  } finally {
-
-    setLoading(false);
-  }
-}
-
+  
   if (!supported) {
 
     return (
@@ -381,22 +297,6 @@ export default function PushNotificationControl() {
             <div className="text-sm font-medium text-green-700">
             Notifiche attive
             </div>
-
-
-            <button
-            type="button"
-            onClick={
-                sendTestNotification
-            }
-            disabled={loading}
-            className="mt-3 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 disabled:opacity-50"
-            >
-            {loading
-                ? "Invio..."
-                : "Invia notifica di prova"}
-            </button>
-
-        </div>
 
         ) : (
 
