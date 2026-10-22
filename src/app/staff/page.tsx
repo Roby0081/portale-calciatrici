@@ -2154,7 +2154,7 @@ async function handleCreateSession() {
 
                 <div
                   key={post.id}
-                  className="rounded-xl border border-gray-200 p-4"
+                  className="w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 p-4"
                 >
 
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -2345,7 +2345,7 @@ async function handleCreateSession() {
                       key={
                         session.id
                       }
-                      className="rounded-xl border border-gray-200 p-4"
+                     className="w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 p-4"
                     >
 
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -2386,6 +2386,9 @@ async function handleCreateSession() {
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                           {session.status}
                         </span>
+</div>
+
+</div>
 
     {/* RIEPILOGO POST-ALLENAMENTO */}
 
@@ -2638,15 +2641,10 @@ async function handleCreateSession() {
                               session
                             )
                           }
-                          className="rounded-lg border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          className="w-full max-w-full whitespace-normal break-words rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-800 sm:w-auto"
                         >
                           Modifica
                         </button>
-
-                      </div>
-
-                      </div>
-
 
                       <div className="mt-4 flex flex-wrap gap-2">
 
