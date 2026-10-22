@@ -1894,7 +1894,7 @@ async function handleCreateSession() {
 
                           {selected && (
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between gap-2 sm:justify-start">
 
                               <input
                                 type="number"
@@ -2381,7 +2381,7 @@ async function handleCreateSession() {
 
                         </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between gap-2 sm:justify-start">
 
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                           {session.status}
@@ -2414,7 +2414,7 @@ async function handleCreateSession() {
 
                                 ) : (
 
-                                  <div className="grid grid-cols-3 gap-3">
+                                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
                                     <div>
 
@@ -2477,7 +2477,7 @@ async function handleCreateSession() {
         session
       )
     }
-    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800"
+    className="w-full max-w-full whitespace-normal rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-800 sm:w-auto"
   >
     {participantSessionId ===
     session.id
@@ -2539,7 +2539,7 @@ async function handleCreateSession() {
                   className="rounded-lg bg-white p-3"
                 >
 
-                  <div className="mb-2 flex items-center justify-between gap-3">
+                  <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
 
@@ -2558,7 +2558,7 @@ async function handleCreateSession() {
                     </div>
 
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2 sm:justify-start">
 
                       <input
                         type="number"
@@ -2604,7 +2604,7 @@ async function handleCreateSession() {
                         participant
                       )
                     }
-                    className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white disabled:bg-gray-300"
+                    className="w-full max-w-full whitespace-normal rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-800 sm:w-auto"
                   >
 
                     {participantSavingUserId ===
