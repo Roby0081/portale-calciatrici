@@ -65,6 +65,17 @@ type TrainingSessionSummary = {
   mean_srpe: number | null;
 };
 
+type TrainingSessionParticipant = {
+  user_id: string;
+  athlete_id: string;
+  override_duration_min: number | null;
+  effective_duration_min: number;
+  attendance_status:
+    | "unknown"
+    | "present"
+    | "absent";
+};
+
 const objectiveOptions: {
   code: ObjectiveCode;
   label: string;
@@ -301,6 +312,40 @@ const [
     sessionsLoading,
     setSessionsLoading,
   ] = useState(false);
+
+  // ==========================================================
+  // INDIVIDUAL SESSION DURATION OVERRIDES
+  // ==========================================================
+
+    const [
+      participantSessionId,
+      setParticipantSessionId,  
+    ] = useState<string | null>(null);
+
+    const [
+      sessionParticipants,
+      setSessionParticipants,
+    ] = useState<TrainingSessionParticipant[]>([]);
+
+    const [
+      participantDurationInputs,
+      setParticipantDurationInputs,
+    ] = useState<Record<string, string>>({});
+
+    const [
+      participantsLoading,
+      setParticipantsLoading,
+    ] = useState(false);
+
+    const [
+      participantSavingUserId,
+      setParticipantSavingUserId,
+    ] = useState<string | null>(null);
+
+    const [
+      participantsError,
+      setParticipantsError,
+    ] = useState("");
 
 
   // ==========================================================
@@ -637,6 +682,245 @@ const [
 
     setSessionSummaries(summaries);
   } 
+
+  async function openParticipantDurations(
+    session: TrainingSession
+  ) {
+
+    if (
+      participantSessionId === session.id
+    ) {
+      setParticipantSessionId(null);
+      setSessionParticipants([]);
+      setParticipantDurationInputs({});
+      setParticipantsError("");
+      return;
+    }
+
+    setParticipantSessionId(session.id);
+    setParticipantsLoading(true);
+    setParticipantsError("");
+
+    try {
+
+      const {
+        data,
+        error,
+      } = await supabase.rpc(
+        "get_training_session_participants",
+        {
+          p_session_id: session.id,
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      const rows =
+        (data ?? []).map(
+          (item: {
+            user_id: string;
+            athlete_id: string;
+            override_duration_min: number | null;
+            effective_duration_min: number;
+            attendance_status:
+              | "unknown"
+              | "present"
+              | "absent";
+          }) => ({
+            user_id:
+              item.user_id,
+
+            athlete_id:
+              item.athlete_id,
+
+            override_duration_min:
+              item.override_duration_min === null
+                ? null
+                : Number(
+                    item.override_duration_min
+                  ),
+
+            effective_duration_min:
+              Number(
+                item.effective_duration_min
+              ),
+
+            attendance_status:
+              item.attendance_status,
+          })
+        ) as TrainingSessionParticipant[];
+
+
+      setSessionParticipants(rows);
+
+
+      const initialInputs:
+        Record<string, string> = {};
+
+      for (const participant of rows) {
+
+        initialInputs[
+          participant.user_id
+        ] = String(
+          participant.effective_duration_min
+        );
+      }
+
+      setParticipantDurationInputs(
+        initialInputs
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Errore caricamento durate individuali:",
+        error
+      );
+
+      setSessionParticipants([]);
+
+      setParticipantsError(
+        "Impossibile caricare le durate individuali."
+      );
+
+    } finally {
+
+      setParticipantsLoading(false);
+    }
+  }
+
+  async function saveParticipantDuration(
+    session: TrainingSession,
+    participant: TrainingSessionParticipant
+  ) {
+
+    if (participantSavingUserId) {
+      return;
+    }
+
+    const rawValue =
+      participantDurationInputs[
+        participant.user_id
+      ] ?? "";
+
+
+    /*
+      Campo vuoto = usa durata standard.
+    */
+
+    const enteredDuration =
+      rawValue.trim() === ""
+        ? session.duration_min
+        : Number(rawValue);
+
+
+    if (
+      !Number.isInteger(enteredDuration) ||
+      enteredDuration < 0 ||
+      enteredDuration > 600
+    ) {
+
+      setParticipantsError(
+        "La durata deve essere un numero intero compreso tra 0 e 600 minuti."
+      );
+
+      return;
+    }
+
+
+    /*
+      Se coincide con la durata standard,
+      salviamo NULL: non serve un override.
+    */
+
+    const overrideDuration =
+      enteredDuration ===
+      session.duration_min
+        ? null
+        : enteredDuration;
+
+
+    setParticipantSavingUserId(
+      participant.user_id
+    );
+
+    setParticipantsError("");
+
+
+    try {
+
+      const {
+        error,
+      } = await supabase.rpc(
+        "set_training_session_participant",
+        {
+          p_session_id:
+            session.id,
+
+          p_user_id:
+            participant.user_id,
+
+          p_duration_min:
+            overrideDuration,
+
+          p_attendance_status:
+            participant.attendance_status ??
+            "unknown",
+        }
+      );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      setSessionParticipants(
+        (previous) =>
+          previous.map((item) =>
+            item.user_id ===
+            participant.user_id
+              ? {
+                  ...item,
+
+                  override_duration_min:
+                    overrideDuration,
+
+                  effective_duration_min:
+                    enteredDuration,
+                }
+              : item
+          )
+      );
+
+
+      /*
+        Aggiorna immediatamente anche
+        sRPE medio della seduta.
+      */
+
+      await loadSessionSummaries();
+
+    } catch (error) {
+
+      console.error(
+        "Errore salvataggio durata individuale:",
+        error
+      );
+
+      setParticipantsError(
+        "Errore durante il salvataggio della durata."
+      );
+
+    } finally {
+
+      setParticipantSavingUserId(
+        null
+      );
+    }
+  }
 
   async function loadUnlinkedPosts() {
 
@@ -2183,6 +2467,169 @@ async function handleCreateSession() {
                             );
 
                           })()}
+
+  <div className="mt-4">
+
+  <button
+    type="button"
+    onClick={() =>
+      openParticipantDurations(
+        session
+      )
+    }
+    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800"
+  >
+    {participantSessionId ===
+    session.id
+      ? "Chiudi durate individuali"
+      : "Durate individuali"}
+  </button>
+
+
+  {participantSessionId ===
+    session.id && (
+
+    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+
+      <div className="mb-1 font-semibold text-gray-900">
+        Durate individuali
+      </div>
+
+      <div className="mb-4 text-sm text-gray-600">
+        Durata standard della seduta:{" "}
+        <strong>
+          {session.duration_min} min
+        </strong>
+      </div>
+
+
+      {participantsError && (
+
+        <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          {participantsError}
+        </div>
+
+      )}
+
+
+      {participantsLoading ? (
+
+        <div className="text-sm text-gray-600">
+          Caricamento...
+        </div>
+
+      ) : (
+
+        <div className="space-y-3">
+
+          {sessionParticipants.map(
+            (participant) => {
+
+              const isOverride =
+                participant
+                  .override_duration_min !==
+                null;
+
+              return (
+
+                <div
+                  key={
+                    participant.user_id
+                  }
+                  className="rounded-lg bg-white p-3"
+                >
+
+                  <div className="mb-2 flex items-center justify-between gap-3">
+
+                    <div>
+
+                      <div className="font-medium text-gray-900">
+                        {
+                          participant.athlete_id
+                        }
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {isOverride
+                          ? "Durata personalizzata"
+                          : "Durata standard"}
+                      </div>
+
+                    </div>
+
+
+                    <div className="flex items-center gap-2">
+
+                      <input
+                        type="number"
+                        min="0"
+                        max="600"
+                        step="1"
+                        value={
+                          participantDurationInputs[
+                            participant.user_id
+                          ] ?? ""
+                        }
+                        onChange={(event) =>
+                          setParticipantDurationInputs(
+                            (previous) => ({
+                              ...previous,
+
+                              [participant.user_id]:
+                                event.target.value,
+                            })
+                          )
+                        }
+                        className="w-20 rounded-lg border border-gray-300 px-2 py-2 text-center text-gray-900"
+                      />
+
+                      <span className="text-sm text-gray-600">
+                        min
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <button
+                    type="button"
+                    disabled={
+                      participantSavingUserId !==
+                      null
+                    }
+                    onClick={() =>
+                      saveParticipantDuration(
+                        session,
+                        participant
+                      )
+                    }
+                    className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white disabled:bg-gray-300"
+                  >
+
+                    {participantSavingUserId ===
+                    participant.user_id
+                      ? "Salvataggio..."
+                      : "Salva durata"}
+
+                  </button>
+
+                </div>
+
+              );
+            }
+          )}
+
+        </div>
+
+      )}
+
+    </div>
+
+  )}
+
+</div>
+
 
                         <button
                           type="button"
