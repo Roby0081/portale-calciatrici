@@ -76,6 +76,42 @@ type TrainingSessionParticipant = {
     | "absent";
 };
 
+  type MatchRecord = {
+    id: string;
+    team_id: string;
+    training_session_id: string;
+
+    opponent: string;
+    competition: string | null;
+
+    home_away:
+      | "home"
+      | "away"
+      | "neutral";
+
+    match_type:
+      | "competition"
+      | "friendly";
+
+    status:
+      | "scheduled"
+      | "played"
+      | "postponed"
+      | "cancelled";
+
+    notes: string | null;
+    created_at: string;
+
+    training_session: {
+      id: string;
+      session_date: string;
+      start_time: string | null;
+      duration_min: number;
+      session_type: string;
+      status: string;
+    } | null;
+  };
+
 const objectiveOptions: {
   code: ObjectiveCode;
   label: string;
@@ -347,6 +383,80 @@ const [
       setParticipantsError,
     ] = useState("");
 
+  // ==========================================================
+  // MATCHES
+  // ==========================================================
+
+    const [
+      matchDate,
+      setMatchDate,
+    ] = useState(
+      getTodayLocal()
+    );
+
+    const [
+      matchStartTime,
+      setMatchStartTime,
+    ] = useState("");
+
+    const [
+      matchDurationMin,
+      setMatchDurationMin,
+    ] = useState("90");
+
+    const [
+      matchOpponent,
+      setMatchOpponent,
+    ] = useState("");
+
+    const [
+      matchCompetition,
+      setMatchCompetition,
+    ] = useState("");
+
+    const [
+      matchHomeAway,
+      setMatchHomeAway,
+    ] = useState<
+      "home" | "away" | "neutral"
+    >("home");
+
+    const [
+      matchType,
+      setMatchType,
+    ] = useState<
+      "competition" | "friendly"
+    >("competition");
+
+    const [
+      matchNotes,
+      setMatchNotes,
+    ] = useState("");
+
+    const [
+      savingMatch,
+      setSavingMatch,
+    ] = useState(false);
+
+    const [
+      matchError,
+      setMatchError,
+    ] = useState("");
+
+    const [
+      matchSuccess,
+      setMatchSuccess,
+    ] = useState("");
+
+    const [
+      matches,
+      setMatches,
+    ] = useState<MatchRecord[]>([]);
+
+    const [
+      matchesLoading,
+      setMatchesLoading,
+    ] = useState(false);  
 
   // ==========================================================
   // PROFILE
@@ -632,6 +742,171 @@ const [
 
     setSessionsLoading(false);
   }
+
+    async function loadMatches() {
+
+      if (!staffProfile?.team_id) {
+        return;
+      }
+
+      setMatchesLoading(true);
+
+      try {
+
+        const {
+          data,
+          error,
+        } = await supabase
+          .from("matches")
+          .select(`
+            id,
+            team_id,
+            training_session_id,
+            opponent,
+            competition,
+            home_away,
+            match_type,
+            status,
+            notes,
+            created_at,
+
+            training_session:training_sessions!matches_training_session_id_fkey (
+              id,
+              session_date,
+              start_time,
+              duration_min,
+              session_type,
+              status
+            )
+          `)
+          .eq(
+            "team_id",
+            staffProfile.team_id
+          )
+          .limit(100);
+
+
+        if (error) {
+          throw error;
+        }
+
+       
+
+const rows: MatchRecord[] =
+  (data ?? []).map((item) => {
+
+    const rawTrainingSession =
+      item.training_session;
+
+    const trainingSession =
+      Array.isArray(rawTrainingSession)
+        ? rawTrainingSession[0] ?? null
+        : rawTrainingSession ?? null;
+
+    return {
+      id: item.id,
+      team_id: item.team_id,
+      training_session_id:
+        item.training_session_id,
+
+      opponent:
+        item.opponent,
+
+      competition:
+        item.competition,
+
+      home_away:
+        item.home_away as
+          | "home"
+          | "away"
+          | "neutral",
+
+      match_type:
+        item.match_type as
+          | "competition"
+          | "friendly",
+
+      status:
+        item.status as
+          | "scheduled"
+          | "played"
+          | "postponed"
+          | "cancelled",
+
+      notes:
+        item.notes,
+
+      created_at:
+        item.created_at,
+
+      training_session:
+        trainingSession
+          ? {
+              id:
+                trainingSession.id,
+
+              session_date:
+                trainingSession.session_date,
+
+              start_time:
+                trainingSession.start_time,
+
+              duration_min:
+                Number(
+                  trainingSession.duration_min
+                ),
+
+              session_type:
+                trainingSession.session_type,
+
+              status:
+                trainingSession.status,
+            }
+          : null,
+    };
+  });
+
+         
+
+        /*
+          Ordine per data gara,
+          dalla più recente.
+        */
+
+                rows.sort(
+            (a, b) => {
+
+              const dateA =
+                a.training_session
+                  ?.session_date ?? "";
+
+              const dateB =
+                b.training_session
+                  ?.session_date ?? "";
+
+              return dateB.localeCompare(
+                dateA
+              );
+            }
+          );
+
+
+        setMatches(rows);
+
+      } catch (error) {
+
+        console.error(
+          "Errore caricamento gare:",
+          error
+        );
+
+        setMatches([]);
+
+      } finally {
+
+        setMatchesLoading(false);
+      }
+    }
 
   async function loadSessionSummaries() {
 
@@ -1438,6 +1713,144 @@ async function handleCreateSession() {
   }
 }
 
+      // ==========================================
+      // NUOVO MATCH
+      // ==========================================
+
+    async function handleCreateMatch(
+      event: React.FormEvent
+    ) {
+
+      event.preventDefault();
+
+      if (savingMatch) {
+        return;
+      }
+
+      setMatchError("");
+      setMatchSuccess("");
+
+
+      const duration =
+        Number(matchDurationMin);
+
+
+      if (
+        !matchDate ||
+        !matchOpponent.trim() ||
+        !Number.isInteger(duration) ||
+        duration <= 0 ||
+        duration > 600
+      ) {
+
+        setMatchError(
+          "Inserisci data, avversario e una durata valida."
+        );
+
+        return;
+      }
+
+
+      setSavingMatch(true);
+
+
+      try {
+
+        const {
+          error,
+        } = await supabase.rpc(
+          "create_match",
+          {
+            p_match_date:
+              matchDate,
+
+            p_start_time:
+              matchStartTime || null,
+
+            p_duration_min:
+              duration,
+
+            p_opponent:
+              matchOpponent.trim(),
+
+            p_competition:
+              matchCompetition.trim() ||
+              null,
+
+            p_home_away:
+              matchHomeAway,
+
+            p_match_type:
+              matchType,
+
+            p_notes:
+              matchNotes.trim() ||
+              null,
+          }
+        );
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        setMatchSuccess(
+          "Gara creata correttamente."
+        );
+
+
+        /*
+          Reset form.
+        */
+
+        setMatchDate(
+          getTodayLocal()
+        );
+
+        setMatchStartTime("");
+
+        setMatchDurationMin("90");
+
+        setMatchOpponent("");
+
+        setMatchCompetition("");
+
+        setMatchHomeAway("home");
+
+        setMatchType("competition");
+
+        setMatchNotes("");
+
+
+        /*
+          Aggiorna gare e sedute:
+          la gara ha creato anche una
+          training_session.
+        */
+
+        await Promise.all([
+          loadMatches(),
+          loadSessions(),
+          loadSessionSummaries(),
+        ]);
+
+      } catch (error) {
+
+        console.error(
+          "Errore creazione gara:",
+          error
+        );
+
+        setMatchError(
+          "Errore durante la creazione della gara."
+        );
+
+      } finally {
+
+        setSavingMatch(false);
+      }
+    }
 
   // ==========================================================
   // HELPERS
@@ -1535,6 +1948,7 @@ async function handleCreateSession() {
       loadSessions();
       loadUnlinkedPosts();
       loadSessionSummaries();
+      loadMatches();
     }
 
   }, [staffProfile?.team_id]);
@@ -2082,6 +2496,417 @@ async function handleCreateSession() {
 
         )}
 
+
+{/* ==========================================================
+    GARE
+========================================================== */}
+
+{staffProfile.team_id && (
+
+  <div className="rounded-2xl bg-white p-6 shadow-md">
+
+    <h2 className="text-xl font-bold text-gray-900">
+      Gare
+    </h2>
+
+    <p className="mt-1 text-sm text-gray-600">
+      Inserisci il calendario delle gare.
+      Ogni gara genera automaticamente
+      una sessione per il monitoraggio
+      di RPE, durata individuale e sRPE.
+    </p>
+
+
+    {/* NUOVA GARA */}
+
+    <form
+      onSubmit={
+        handleCreateMatch
+      }
+      className="mt-6 space-y-4"
+    >
+
+      <h3 className="font-semibold text-gray-900">
+        Nuova gara
+      </h3>
+
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+        <div>
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Data
+          </label>
+
+          <input
+            type="date"
+            value={matchDate}
+            onChange={(event) =>
+              setMatchDate(
+                event.target.value
+              )
+            }
+            required
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+
+        </div>
+
+
+        <div>
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Ora
+          </label>
+
+          <input
+            type="time"
+            value={
+              matchStartTime
+            }
+            onChange={(event) =>
+              setMatchStartTime(
+                event.target.value
+              )
+            }
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+
+        </div>
+
+
+        <div>
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Avversario
+          </label>
+
+          <input
+            type="text"
+            value={
+              matchOpponent
+            }
+            onChange={(event) =>
+              setMatchOpponent(
+                event.target.value
+              )
+            }
+            required
+            placeholder="Es. Juventus"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+
+        </div>
+
+
+        <div>
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Competizione
+          </label>
+
+          <input
+            type="text"
+            value={
+              matchCompetition
+            }
+            onChange={(event) =>
+              setMatchCompetition(
+                event.target.value
+              )
+            }
+            placeholder="Es. Campionato"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+
+        </div>
+
+
+        <div>
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Sede
+          </label>
+
+          <select
+            value={
+              matchHomeAway
+            }
+            onChange={(event) =>
+              setMatchHomeAway(
+                event.target.value as
+                  | "home"
+                  | "away"
+                  | "neutral"
+              )
+            }
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
+          >
+
+            <option value="home">
+              Casa
+            </option>
+
+            <option value="away">
+              Trasferta
+            </option>
+
+            <option value="neutral">
+              Campo neutro
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div>
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Tipo
+          </label>
+
+          <select
+            value={matchType}
+            onChange={(event) =>
+              setMatchType(
+                event.target.value as
+                  | "competition"
+                  | "friendly"
+              )
+            }
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900"
+          >
+
+            <option value="competition">
+              Gara ufficiale
+            </option>
+
+            <option value="friendly">
+              Amichevole
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div>
+
+          <label className="mb-1 block text-sm font-medium text-gray-800">
+            Durata nominale
+          </label>
+
+          <div className="flex items-center gap-2">
+
+            <input
+              type="number"
+              min="1"
+              max="600"
+              step="1"
+              value={
+                matchDurationMin
+              }
+              onChange={(event) =>
+                setMatchDurationMin(
+                  event.target.value
+                )
+              }
+              required
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+            />
+
+            <span className="text-sm text-gray-600">
+              min
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div>
+
+        <label className="mb-1 block text-sm font-medium text-gray-800">
+          Note
+        </label>
+
+        <textarea
+          value={
+            matchNotes
+          }
+          onChange={(event) =>
+            setMatchNotes(
+              event.target.value
+            )
+          }
+          rows={2}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+        />
+
+      </div>
+
+
+      {matchError && (
+
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          {matchError}
+        </div>
+
+      )}
+
+
+      {matchSuccess && (
+
+        <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
+          {matchSuccess}
+        </div>
+
+      )}
+
+
+      <button
+        type="submit"
+        disabled={
+          savingMatch
+        }
+        className="w-full rounded-lg bg-gray-900 px-4 py-3 font-semibold text-white disabled:bg-gray-300 sm:w-auto"
+      >
+
+        {savingMatch
+          ? "Salvataggio..."
+          : "Crea gara"}
+
+      </button>
+
+    </form>
+
+
+    {/* ELENCO GARE */}
+
+    <div className="mt-8">
+
+      <h3 className="mb-4 font-semibold text-gray-900">
+        Gare inserite
+      </h3>
+
+
+      {matchesLoading ? (
+
+        <div className="text-sm text-gray-600">
+          Caricamento...
+        </div>
+
+      ) : matches.length === 0 ? (
+
+        <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
+          Nessuna gara inserita.
+        </div>
+
+      ) : (
+
+        <div className="space-y-3">
+
+          {matches.map(
+            (match) => (
+
+              <div
+                key={match.id}
+                className="w-full min-w-0 rounded-xl border border-gray-200 p-4"
+              >
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+
+                  <div>
+
+                    <div className="font-bold text-gray-900">
+
+                      {
+                        match
+                          .training_session
+                          ?.session_date
+                      }
+
+                      {match
+                        .training_session
+                        ?.start_time
+                        ? ` · ${match.training_session.start_time.slice(
+                            0,
+                            5
+                          )}`
+                        : ""}
+
+                    </div>
+
+
+                    <div className="mt-1 font-medium text-gray-800">
+                      {match.opponent}
+                    </div>
+
+
+                    <div className="mt-1 text-sm text-gray-600">
+
+                      {match.home_away ===
+                      "home"
+                        ? "Casa"
+                        : match.home_away ===
+                            "away"
+                          ? "Trasferta"
+                          : "Campo neutro"}
+
+                      {" · "}
+
+                      {match.match_type ===
+                      "friendly"
+                        ? "Amichevole"
+                        : match.competition ||
+                          "Gara ufficiale"}
+
+                    </div>
+
+                  </div>
+
+
+                  <span className="self-start rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                    {match.status}
+                  </span>
+
+                </div>
+
+
+                <div className="mt-3 text-sm text-gray-600">
+
+                  Durata nominale:{" "}
+
+                  <strong className="text-gray-900">
+                    {
+                      match
+                        .training_session
+                        ?.duration_min ?? "-" }{" "}
+                    min
+                  </strong>
+
+                </div>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+      )}
+
+    </div>
+
+  </div>
+
+)}
+
+
   {/* ==========================================================
       POST-ALLENAMENTO DA ASSOCIARE
   ========================================================== */}
@@ -2338,7 +3163,12 @@ async function handleCreateSession() {
 
               <div className="space-y-4">
 
-                {sessions.map(
+                {sessions.filter(
+                            (session) =>
+                              session.session_type !==
+                              "match"
+                          )
+                          .map(
                   (session) => (
 
                     <div
